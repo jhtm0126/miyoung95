@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="animalstory">
+  <insert id="create" parameterType="AnimalStoryVO">
+    INSERT INTO animalstory(anino, anitype, title, content, files, thumbs, sizes, managerno, rdate)
+    VALUES ((SELECT NVL(MAX(anino), 0)+1 as anino FROM animalstory),
+    #{anitype}, #{title}, #{content}, #{files}, #{thumbs}, #{sizes}, #{managerno}, sysdate)
+  </insert>
+
+  <select id="list" resultType="AnimalStoryVO">
+    SELECT anino, anitype, title, content, files, thumbs, sizes,managerno, substr(rdate, 1, 8) rdate
+    FROM animalstory
+    ORDER BY anino DESC
+  </select>
+  
+  <select id="list_anitype" parameterType="int" resultType="AnimalStoryVO">
+    SELECT anino, anitype, title, content, files, thumbs, sizes, managerno, substr(rdate, 1, 8) rdate
+    FROM animalstory
+    WHERE anitype=#{anitype}
+    ORDER BY anino DESC
+  </select>
+  
+  <select id="manager" parameterType="int" resultType="String">
+    SELECT name
+    FROM manager
+    WHERE managerno = #{managerno}
+  </select>
+  
+  <delete id="delete" parameterType="int">
+    DELETE FROM animalstory
+    WHERE anino = #{anino}
+  </delete>
+  
+  <select id="read" parameterType="int" resultType="AnimalStoryVO">
+    SELECT anino, anitype, title, content, files, thumbs, sizes, managerno, substr(rdate, 1, 8) rdate
+    FROM animalstory
+    WHERE anino = #{anino}
+  </select>
+  
+  <update id="update" parameterType="AnimalStoryVO">
+    UPDATE animalstory
+    SET thumbs=#{thumbs}, files=#{files}, sizes=#{sizes}, anitype = #{anitype}, title = #{title}, content = #{content}
+    WHERE anino = #{anino}
+  </update>
+  
+  <!-- 검색가능 리스트 - 전체 -->
+  <select id="list_by_search" parameterType="String" resultType="AnimalStoryVO">
+    SELECT anino, anitype, title, content, files, thumbs, sizes, managerno, substr(rdate, 1, 8) rdate
+    FROM animalstory
+    WHERE content LIKE '%' || #{content} || '%'
+    ORDER BY anino DESC
+  </select>
+  
+  <!-- 검색가능 리스트 - 분류 -->
+  <select id="list_by_search_anitype" parameterType="HashMap" resultType="AnimalStoryVO">
+    SELECT anino, anitype, title, content, files, thumbs, sizes, managerno, substr(rdate, 1, 8) rdate
+    FROM animalstory
+    WHERE content LIKE '%' || #{content} || '%' AND anitype = #{anitype}
+    ORDER BY anino DESC
+  </select>
+  
+  <!-- 검색 + 페이징 - 전체 -->
+  <select id="list_by_search_paging" parameterType="HashMap" resultType="AnimalStoryVO">
+    SELECT anino, anitype, title, content, files, thumbs, sizes, managerno, rdate, r
+    FROM( 
+              SELECT anino, anitype, title, content, files, thumbs, sizes, managerno, rdate, rownum as r
+              FROM(
+                       SELECT anino, anitype, title, content, files, thumbs, sizes, managerno, substr(rdate, 1, 8) rdate
+                        FROM animalstory
+                      <if test="content != null"> <!-- 검색하는 경우 -->
+                         WHERE content LIKE '%' || #{content} || '%'  
+                       </if>                        
+                       ORDER BY anino DESC
+               )
+    )
+    WHERE <![CDATA[ r >= #{startNum} AND r <= #{endNum} ]]>
+  </select>
+  
+  <!-- 검색 + 페이징 - 분류 -->
+  <select id="list_by_search_paging_anitype" parameterType="HashMap" resultType="AnimalStoryVO">
+    SELECT anino, anitype, title, content, files, thumbs, sizes, managerno, rdate, r
+    FROM( 
+              SELECT anino, anitype, title, content, files, thumbs, sizes, managerno, rdate, rownum as r
+              FROM(
+                       SELECT anino, anitype, title, content, files, thumbs, sizes, managerno, substr(rdate, 1, 8) rdate
+                        FROM animalstory
+                      <choose>
+                          <when test="content == null or content == ''"> <!-- 검색하지 않는 경우 -->
+                            WHERE content LIKE '%' || #{content} || '%'  AND anitype = #{anitype}
+                          </when>
+                          <otherwise>
+                            WHERE content LIKE '%' || #{content} || '%'  AND anitype = #{anitype}
+                          </otherwise>
+                        </choose>                       
+                       ORDER BY anino DESC
+               )
+    )
+    WHERE <![CDATA[ r >= #{startNum} AND r <= #{endNum} ]]>
+  </select>
+  
+  <select id="search_count" parameterType="HashMap" resultType="int">
+    SELECT count(*)as cnt
+    FROM animalstory
+    <if test="content != null"> <!-- 검색하는 경우 -->
+    WHERE content LIKE '%' || #{content} || '%'    
+    </if>
+  </select>
+  
+  <select id="search_count_anitype" parameterType="HashMap" resultType="int">
+    SELECT count(*)as cnt
+    FROM animalstory
+    <if test="content != null"> <!-- 검색하는 경우 -->
+    WHERE content LIKE '%' || #{content} || '%' AND anitype LIKE '%' || #{anitype} || '%'
+    </if>
+  </select>
+</mapper>

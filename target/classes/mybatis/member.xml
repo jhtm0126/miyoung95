@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace = "member">
+  <select id="checkId" resultType="int" parameterType="String">
+    SELECT COUNT(id) as cnt
+    FROM member
+    WHERE id=#{id}
+  </select>
+  
+   <!-- 이메일 중복확인 -->
+  <select id="checkemail" resultType="int" parameterType="String">
+    SELECT COUNT(email) as cnt
+    FROM member
+    WHERE email=#{email}
+  </select>
+
+  <insert id="create" parameterType="MemberVO">
+    INSERT INTO member(memberno,
+                                  id, passwd, name, phone, email, zipcode, address1, address2, rdate)
+    VALUES ((SELECT NVL(MAX(memberno), 0)+1 as memberno FROM member),
+                 #{id}, #{passwd}, #{name}, #{phone}, #{email}, #{zipcode}, #{address1}, #{address2}, sysdate)
+  </insert>
+  
+  <select id="list" resultType="MemberVO">
+      SELECT memberno, id, passwd, name, phone, zipcode, address1, address2, rdate
+      FROM member
+      ORDER BY memberno ASC
+  </select>
+
+  <select id="read" resultType="MemberVO" parameterType="int">
+    SELECT memberno, id, passwd, name, phone, email, zipcode, address1, address2, rdate
+    FROM member
+    WHERE memberno = #{memberno}
+  </select>
+  
+  <select id="read2" resultType="MemberVO" parameterType="String">
+    SELECT memberno, id, rdate
+    FROM member
+    WHERE email = #{email}
+  </select>
+  
+  <select id="read3" resultType="MemberVO" parameterType="String">
+    SELECT memberno, id, passwd
+    FROM member
+    WHERE email = #{email}
+  </select>
+
+  <select id="readById" resultType="MemberVO" parameterType="String">
+    SELECT memberno, id, passwd, name, phone,email, zipcode, address1, address2, rdate
+    FROM member
+    WHERE id = #{id}
+  </select>
+
+  <update id="update" parameterType="MemberVO">
+    UPDATE member 
+    SET name=#{name}, phone=#{phone}, email=#{email}, zipcode=#{zipcode},
+          address1=#{address1}, address2=#{address2}
+    WHERE memberno=#{memberno}
+  </update>  
+  
+  <!-- <update id="kind_" parameterType="MemberVO">
+    UPDATE member 
+    SET kind=#{kind}
+    WHERE memberno=#{memberno}
+  </update> -->
+
+  <!-- 패스워드 변경 -->
+  <update id="passwd_update" parameterType="HashMap">
+    UPDATE member
+    SET passwd=#{passwd}
+    WHERE memberno=#{memberno}    
+  </update> 
+
+  <delete id="delete" parameterType="int">
+    DELETE FROM member
+    WHERE memberno=#{memberno}
+  </delete>  
+
+  <select id="login" resultType="int" parameterType="Map">
+    SELECT COUNT(*) as cnt
+    FROM member
+    WHERE id=#{id} AND passwd=#{passwd}
+  </select>
+  
+  <select id="idsearch" resultType="MemberVO" parameterType="HashMap">
+    SELECT memberno,id,name,email, rdate
+    FROM member
+    WHERE (name LIKE '%' || #{name} || '%') AND (email LIKE '%' || #{email} || '%')
+    ORDER BY memberno DESC
+  </select>
+  
+  <!-- category별 검색된 레코드 목록 -->
+  <select id="list_search" resultType="MemberVO" parameterType="HashMap">
+    SELECT memberno, id, passwd, name, phone,email, zipcode, address1, address2, rdate, r
+    FROM (
+            SELECT memberno, id, passwd, name, phone,email, zipcode, address1, address2, rdate, rownum as r
+            FROM (
+                      SELECT memberno, id, passwd, name, phone,email, zipcode, address1, address2, rdate
+                      FROM member
+                      WHERE name LIKE '%' || #{name} || '%' 
+                      ORDER BY memberno ASC
+            )            
+  )
+    WHERE <![CDATA[ r >= #{startNum} AND r <= #{endNum} ]]> 
+  </select>
+  
+  <!-- category별 검색된 레코드 갯수 -->
+  <select id="search_count" resultType="int" parameterType="HashMap">
+    SELECT COUNT(*) as cnt
+    FROM member
+    WHERE name LIKE '%' || #{name} || '%'  
+  </select>
+  
+  <select id="list_id" resultType="MemberVO">
+     <!--  SELECT memberno, id, passwd, name, phone, zipcode, address1, address2, rdate -->
+      SELECT memberno, id, name, email, rdate
+      FROM member
+      ORDER BY memberno ASC
+  </select>
+  
+   <!-- category별 검색된 레코드 갯수 -->
+  <select id="search_count2" resultType="int" parameterType="HashMap">
+    SELECT COUNT(*) as cnt
+    FROM member
+    WHERE (name LIKE '%' || #{name} || '%') AND (email LIKE '%' || #{email} || '%')
+  </select>
+  
+  <select id="list_passwd" resultType="MemberVO">
+     <!--  SELECT memberno, id, passwd, name, phone, zipcode, address1, address2, rdate -->
+      SELECT memberno, id, name,email,passwd
+      FROM member
+      ORDER BY memberno ASC
+  </select>
+  
+  <select id="passwdsearch" resultType="MemberVO" parameterType="HashMap">
+    SELECT memberno,id,name,email,passwd
+    FROM member
+    WHERE name =#{name} AND id =#{id} AND email =#{email}
+    ORDER BY memberno DESC
+  </select>
+  
+   <!-- category별 검색된 레코드 갯수 -->
+  <select id="search_count3" resultType="int" parameterType="HashMap">
+    SELECT COUNT(*) as cnt
+    FROM member
+    WHERE (name =#{name}) AND (id =#{id}) AND (email =#{email})
+  </select>
+  
+  
+</mapper> 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
